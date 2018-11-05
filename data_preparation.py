@@ -68,8 +68,12 @@ obj_cols = list(dataset_df.select_dtypes(include=['object']).columns)
 
 ##### Correlation Maps #########
 
+
 #Plot correlation matrix
 dp.plot_heatmap(dataset_df)
+
+#Add features with similarity to be removed later
+cols_to_remove = ['GarageCars','GarageYrBlt','TotalBsmtSF','TotRmsAbvGrd']
 
 
 #saleprice correlation matrix
@@ -146,11 +150,30 @@ sns.catplot(x='MSZoning',y='SalePrice', data=dataset_df,
 # Data Cleansing
 ################
 
+#Create a copy of the original dataset
+new_df = dataset_df.copy()
 
+# Based on the description of the dataset, anything missing here is actually N/A 
+# We should replace the values with "None" so that they are encoded  to a specific value
+cols_to_mod = ['MSSubClass','MiscFeature','Alley','Fence','FireplaceQu','GarageType', 'GarageFinish',\
+ 'GarageQual','GarageCond','PoolQC','BsmtQual', 'BsmtCond', 'BsmtExposure',\
+ 'BsmtFinType1', 'BsmtFinType2','MasVnrType']
+
+for col in cols_to_mod:
+    new_df[col] = dataset_df[col].fillna("None")
+
+
+# Based on the description of the dataset, anything missing here is actually N/A 
+# We should replace the values with 0 so that they are encoded  to a specific value
+cols_to_mod = ['MasVnrArea','BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF',\
+                'TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath']
+
+for col in cols_to_mod:
+    new_df[col] = new_df[col].fillna(0)
 
 #Removing outliers for GrLivArea
 plot_relplot(dataset_df,'GrLivArea','SalePrice')
-new_df = dataset_df.drop(dataset_df[(dataset_df['GrLivArea']>4000) & (dataset_df['SalePrice'] < 300000)].index)
+new_df = new_df.drop(dataset_df[(dataset_df['GrLivArea']>4000) & (dataset_df['SalePrice'] < 300000)].index)
 plot_relplot(new_df,'GrLivArea','SalePrice')
 
 #Drop features missing > 90% of trainset
@@ -158,23 +181,40 @@ dp.display_missing_cols(dataset_df)
 cols_to_drop = ['Alley','MiscFeature','PoolQC']
 new_df = dataset_df.drop(cols_to_drop,axis=1)
 
+lowcorr_cols = ['YrSold',  'Id', 'MiscVal', 'BsmtHalfBath']
 #Drop low correlation vars
-cols_to_drop = lowcorr_cols
-new_df = new_df.drop(cols_to_drop,axis=1)
+new_df = new_df.drop(lowcorr_cols,axis=1)
 
 #Drop redundant, duplicate features
-cols_to_drop = ['1stFlrSF','GarageCars']
-new_df = new_df.drop(cols_to_drop,axis=1)
+new_df = new_df.drop(cols_to_remove,axis=1)
+
+
+
+area_cols = ['LotArea',
+ 'MasVnrArea',
+ 'BsmtFinSF1',
+ 'BsmtUnfSF',
+ '1stFlrSF',
+ '2ndFlrSF',
+ 'GrLivArea',
+ 'GarageArea',
+ 'WoodDeckSF',
+ 'OpenPorchSF']
+
+col_list = area_cols
 
 
 #Remove outliers using quantile values
-col_list = ['GrLivArea','LotArea']
+#col_list = ['GrLivArea','LotArea']
+
 plot_relplot(dataset_df,'GrLivArea','SalePrice')
 new_df = dp.remove_outliers_quant(new_df,col_list,0.99)
 plot_relplot(new_df,'GrLivArea','SalePrice')
 
+
 #Encode categorical variables
 encoder, new_df  = dp.encode_df(new_df,'label')
+
 
 #impute missing 
 new_df = dp.impute_missing_mean(new_df)
@@ -199,17 +239,19 @@ new_df['GrLivArea'] = np.log(new_df['GrLivArea'])
 
 
 #Create a 2D array required for Kmeans clustering
-lotArea_array = np.array(new_df["LotArea"]).reshape(-1,1)
+GrLivArea_array = np.array(new_df["GrLivArea"]).reshape(-1,1)
 #Use Kmeans with 5 groups for clustering data
-kmeans = MiniBatchKMeans(n_clusters=5, batch_size=32).fit(lotArea_array)
+kmeans = MiniBatchKMeans(n_clusters=5, batch_size=32).fit(GrLivArea_array)
 
 #Assign new feature based on cluster
-new_df['area_cluster'] = kmeans.predict(lotArea_array)
+new_df['area_cluster'] = kmeans.predict(GrLivArea_array)
 
 #Plot the clusters
-sns.relplot(x='LotArea',y='LotFrontage',data=new_df,
+sns.relplot(x='GrLivArea',y='SalePrice',data=new_df,
             hue='area_cluster',style='area_cluster',height=8,
             palette='YlGnBu')
+
+
 
 
 
@@ -219,7 +261,7 @@ sns.relplot(x='LotArea',y='LotFrontage',data=new_df,
 
 #Save clean data to csv
 #Random shuffle
-new_df = new_df.sample(frac=1).reset_index(drop=True)
+#new_df = new_df.sample(frac=1).reset_index(drop=True)
 
 #Define train and test set
 test_pct = 0.2

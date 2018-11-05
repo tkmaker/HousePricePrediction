@@ -19,13 +19,19 @@ test_df  = pd.read_csv('new_test.csv')
 X = train_df.drop("SalePrice",axis=1)
 y = train_df["SalePrice"]
 
-model  = regression_model()
-model.num_folds = 5
 
-model.trainModel(X,y)
+#Initialize regression model class
+regressor  = regression_model()
+#Choose number of Kfold val
+regressor.num_folds = 5
 
+#Train model now
+regressor.trainModel(X,y)
+
+
+#Save model 
 model_path = 'random_forest'
-model.saveModel(model_path)
+regressor.saveModel(model_path)
 
                 
 

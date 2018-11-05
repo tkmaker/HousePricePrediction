@@ -34,7 +34,7 @@ def display_missing_cols (df):
 def plot_heatmap (df):
     #correlation matrix
     corrmat = df.corr()
-    f, ax = plt.subplots(figsize=(12, 9))
+    f, ax = plt.subplots(figsize=(12, 12))
     sns.heatmap(corrmat, vmax=.8, square=True);
 
 #Plots top/bottom n features in correlation matrix vs Target

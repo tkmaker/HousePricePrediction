@@ -26,9 +26,9 @@ test_df["area_cluster"]  = kmeans.predict(lotArea_array)
 
 
 #Initialize  and load pre-trained model
-model = regression_model()
+regressor = regression_model()
 model_path = 'random_forest'
-model.loadModel(model_path)
+regressor.loadModel(model_path)
 
 #Impute missing values with mean
 X_imputed = dp.impute_missing_mean(test_df)
@@ -38,6 +38,7 @@ X = X_imputed
 X_test = X.drop("SalePrice",axis=1)
 
 
+
 #Target feature
 y_true = test_df["SalePrice"]
 
@@ -45,10 +46,10 @@ y_true = test_df["SalePrice"]
 #Predicted values 
 
 #uncomment for non-xgboost models
-y_pred = model.predict(X_test)
+y_pred = regressor.predict(X_test)
 
 #Uncomment for xgboost
-#y_pred = model.predict(X_test.values)
+#y_pred = regressor.predict(X_test.values)
 
 #Calculate Mean Absolute Error and R2 score based on predictions
 mae = mean_absolute_error(y_true,y_pred)

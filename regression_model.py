@@ -37,6 +37,8 @@ class regression_model (object):
         #Random forest regression model
         self.model = RandomForestRegressor(n_estimators=300) #,min_samples_leaf=3,min_samples_split=8)
         
+      
+        
         #XGBoost model - Gradient Boosted Descision tree
         #self.model = XGBRegressor(max_depth=10,\
          #           min_child_weight=4, subsample=0.7, colsample_bytree=0.6,\
@@ -119,12 +121,17 @@ class regression_model (object):
             #Evaluate the model
             y_pred = self.model.predict(X_test)
             r2 = r2_score(y_test,y_pred)
+            #R2 score for train set
+            y_pred_train = self.model.predict(X_train)
+            r2_train = r2_score(y_train,y_pred_train)
             scores.append(r2)
             
             if (self.verbose):
-                print ("Kfold iteration = {0} R2 Score= {1}".format(i,r2))
+                print ("Kfold iteration = {0}, R2 train score= {1:.4f}, R2 val score={2:.4f}"\
+                       .format(i,r2_train,r2))
             
            
+            
             
             i+=1 
             
@@ -142,6 +149,7 @@ class regression_model (object):
         y_pred = self.model.predict(X)
         return y_pred
     
+    #Plot learning curve
     def plot_lc(self,X,y):
         
         train_sizes, train_scores, test_scores = learning_curve(self.model, X, y, n_jobs=1, cv=self.num_folds, \
@@ -169,7 +177,8 @@ class regression_model (object):
         plt.tight_layout()
         plt.show()
         
-    
+  
+        
     def saveModel (self,path):
         
         print ("Saving model..\n")
