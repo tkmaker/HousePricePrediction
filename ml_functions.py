@@ -16,11 +16,11 @@ from scipy.stats import norm
 from sys import exit
 
 #Display columns in a dataframe by sorted list of missing %
-def display_missing_cols (df):
+def display_missing_colrows (df,colrow=0):
     #Get missing values
-    missing_df = df.isnull().sum(axis=0).reset_index()
+    missing_df = df.isnull().sum(axis=colrow).reset_index()
     #rename columns
-    missing_df.columns = ["feature","miss count"]
+    missing_df.columns = ["feature/index","miss count"]
     #Preserve features with missing counts > 0
     missing_df = missing_df.loc[missing_df["miss count"] > 0]
     #Add miss ratio column
@@ -28,14 +28,17 @@ def display_missing_cols (df):
     #Sort descending 
     missing_df = missing_df.sort_values(by='miss count',ascending=0)
     
-    print ("Columns with missing data:\n",missing_df)
+    if (colrow==0):
+        print ("Columns with missing data:\n",missing_df)
+    else :
+        print ("Rows with missing data:\n",missing_df)
 
 #Plot heatmap
-def plot_heatmap (df):
+def plot_heatmap (df,vmax):
     #correlation matrix
     corrmat = df.corr()
     f, ax = plt.subplots(figsize=(12, 12))
-    sns.heatmap(corrmat, vmax=.8, square=True);
+    sns.heatmap(corrmat, vmax=vmax, square=True);
 
 #Plots top/bottom n features in correlation matrix vs Target
 def plot_tb_heatmap (df,target,n,target_type):
@@ -61,7 +64,7 @@ def plot_tb_heatmap (df,target,n,target_type):
     sns.set(font_scale=1.25)
     f, ax = plt.subplots(figsize=(12, 9))
 
-    hm = sns.heatmap(cm, cbar=True, annot=True, square=True, fmt='.2f', annot_kws={'size': 10},\
+    sns.heatmap(cm, cbar=True, annot=True, square=True, fmt='.2f', annot_kws={'size': 10},\
                  yticklabels=cols.values, xticklabels=cols.values)
     plt.show()
     return return_cols.values

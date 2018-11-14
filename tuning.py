@@ -24,7 +24,7 @@ param_grid = {
     #'max_features': [2, 3],
     #'min_samples_leaf': [3, 4, 5],
     #'min_samples_split': [8, 10, 12],
-    'n_estimators': [100, 300,500,1000]
+    'n_estimators': [25,50,100, 300,500]
 }
 
 

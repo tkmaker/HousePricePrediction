@@ -12,7 +12,7 @@ import seaborn as sns
 import re
 from sklearn.cluster import MiniBatchKMeans
 import pickle
-
+from sklearn.decomposition import PCA
 
 import ml_functions as dp
 
@@ -35,6 +35,9 @@ def plot_relplot(df,x,y):
 #Explore the data types
 dataset_df.info()
 
+
+
+
 #understand feature data types
 dataset_df.get_dtype_counts()
 
@@ -56,7 +59,9 @@ col_list = list(dataset_df.columns)
 
 
 #Display columns with missing data  
-dp.display_missing_cols(dataset_df)
+dp.display_missing_colrows(dataset_df,0)
+#Display rows with missing data  
+dp.display_missing_colrows(dataset_df,1)
 
 
 #display categorical features
@@ -68,9 +73,10 @@ obj_cols = list(dataset_df.select_dtypes(include=['object']).columns)
 
 ##### Correlation Maps #########
 
+new_df = dp.impute_missing_mean(dataset_df)
 
 #Plot correlation matrix
-dp.plot_heatmap(dataset_df)
+dp.plot_heatmap(new_df,0.8)
 
 #Add features with similarity to be removed later
 cols_to_remove = ['GarageCars','GarageYrBlt','TotalBsmtSF','TotRmsAbvGrd']
@@ -150,8 +156,8 @@ sns.catplot(x='MSZoning',y='SalePrice', data=dataset_df,
 # Data Cleansing
 ################
 
-#Create a copy of the original dataset
-new_df = dataset_df.copy()
+#Copy dataframe
+new_df=dataset_df.copy()
 
 # Based on the description of the dataset, anything missing here is actually N/A 
 # We should replace the values with "None" so that they are encoded  to a specific value
@@ -159,6 +165,7 @@ cols_to_mod = ['MSSubClass','MiscFeature','Alley','Fence','FireplaceQu','GarageT
  'GarageQual','GarageCond','PoolQC','BsmtQual', 'BsmtCond', 'BsmtExposure',\
  'BsmtFinType1', 'BsmtFinType2','MasVnrType']
 
+#Replace the values with "None"
 for col in cols_to_mod:
     new_df[col] = dataset_df[col].fillna("None")
 
@@ -168,6 +175,7 @@ for col in cols_to_mod:
 cols_to_mod = ['MasVnrArea','BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF',\
                 'TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath']
 
+#Fill in missing values with a zero
 for col in cols_to_mod:
     new_df[col] = new_df[col].fillna(0)
 
@@ -177,7 +185,7 @@ new_df = new_df.drop(dataset_df[(dataset_df['GrLivArea']>4000) & (dataset_df['Sa
 plot_relplot(new_df,'GrLivArea','SalePrice')
 
 #Drop features missing > 90% of trainset
-dp.display_missing_cols(dataset_df)
+dp.display_missing_colrows(dataset_df,0)
 cols_to_drop = ['Alley','MiscFeature','PoolQC']
 new_df = dataset_df.drop(cols_to_drop,axis=1)
 
@@ -189,6 +197,7 @@ new_df = new_df.drop(lowcorr_cols,axis=1)
 new_df = new_df.drop(cols_to_remove,axis=1)
 
 
+#Remove outliers using quantile values
 
 area_cols = ['LotArea',
  'MasVnrArea',
@@ -203,10 +212,6 @@ area_cols = ['LotArea',
 
 col_list = area_cols
 
-
-#Remove outliers using quantile values
-#col_list = ['GrLivArea','LotArea']
-
 plot_relplot(dataset_df,'GrLivArea','SalePrice')
 new_df = dp.remove_outliers_quant(new_df,col_list,0.99)
 plot_relplot(new_df,'GrLivArea','SalePrice')
@@ -219,23 +224,14 @@ encoder, new_df  = dp.encode_df(new_df,'label')
 #impute missing 
 new_df = dp.impute_missing_mean(new_df)
 
+#reset index since we have dropped some rows 
+new_df.reset_index(drop=True, inplace=True)
 
 
 ####################
 #Feature Engineering
 ####################
 
-
-#Log transformations
-
-#plot target var distribution
-dp.plot_normplot(dataset_df,'SalePrice')
-
-
-new_df["SalePrice"] = np.log(new_df["SalePrice"])
-dp.plot_normplot(new_df,'SalePrice')
-
-new_df['GrLivArea'] = np.log(new_df['GrLivArea'])
 
 
 #Create a 2D array required for Kmeans clustering
@@ -250,7 +246,6 @@ new_df['area_cluster'] = kmeans.predict(GrLivArea_array)
 sns.relplot(x='GrLivArea',y='SalePrice',data=new_df,
             hue='area_cluster',style='area_cluster',height=8,
             palette='YlGnBu')
-
 
 
 

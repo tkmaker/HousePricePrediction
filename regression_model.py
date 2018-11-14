@@ -19,9 +19,9 @@ from sklearn.svm import SVR
 
 import time
 from sklearn.model_selection import KFold
-from sklearn.metrics import mean_squared_error,r2_score
+from sklearn.metrics import mean_squared_error,r2_score,mean_absolute_error
 from sklearn.learning_curve import learning_curve
-from xgboost import XGBRegressor
+#from xgboost import XGBRegressor
 
 class regression_model (object):
     
@@ -35,7 +35,7 @@ class regression_model (object):
         self.encoder = LabelEncoder()
         
         #Random forest regression model
-        self.model = RandomForestRegressor(n_estimators=300) #,min_samples_leaf=3,min_samples_split=8)
+        self.model = RandomForestRegressor(n_estimators=25) #,min_samples_leaf=3,min_samples_split=8)
         
       
         
@@ -121,18 +121,21 @@ class regression_model (object):
             #Evaluate the model
             y_pred = self.model.predict(X_test)
             r2 = r2_score(y_test,y_pred)
+            
             #R2 score for train set
             y_pred_train = self.model.predict(X_train)
             r2_train = r2_score(y_train,y_pred_train)
             scores.append(r2)
             
+            #Mean absolute error
+            mae_train = mean_absolute_error(y_train,y_pred_train)
+            mae_val = mean_absolute_error(y_test,y_pred)
+            
             if (self.verbose):
-                print ("Kfold iteration = {0}, R2 train score= {1:.4f}, R2 val score={2:.4f}"\
-                       .format(i,r2_train,r2))
+                print ("Kfold iteration = {0}:\n\t R2 train score= {1:.4f}, R2 val score={2:.4f}\n\t MAE (train)={3:.4f}, MAE(val) = {4:.4f}"\
+                       .format(i+1,r2_train,r2,mae_train,mae_val))
             
            
-            
-            
             i+=1 
             
         # plot learning curve

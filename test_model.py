@@ -12,7 +12,7 @@ from regression_model import regression_model
 from sklearn.metrics import mean_squared_error,r2_score,mean_absolute_error
 import pandas as pd
 
-import xgboost as xgb
+#import xgboost as xgb
 
 import ml_functions as dp
 
