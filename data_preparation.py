@@ -13,6 +13,8 @@ import re
 from sklearn.cluster import MiniBatchKMeans
 import pickle
 from sklearn.decomposition import PCA
+from scipy.stats import  skew 
+from scipy.special import boxcox1p
 
 import ml_functions as dp
 
@@ -33,13 +35,11 @@ def plot_relplot(df,x,y):
 ##########################
 
 #Explore the data types
-dataset_df.info()
-
-
+print(dataset_df.info())
 
 
 #understand feature data types
-dataset_df.get_dtype_counts()
+print(dataset_df.get_dtype_counts())
 
 #preview the data
 preview_df = dataset_df.head()
@@ -70,11 +70,15 @@ print(dataset_df.select_dtypes(include=['object']).columns)
 
 
 #Plot correlation matrix
-dp.plot_heatmap(dataset_df,0.8)
+dp.plot_heatmap(dataset_df,vmax=0.8,vmin=-0.8)
+
 
 #Add features with similarity to be removed later
-cols_to_remove = ['GarageCars','GarageYrBlt','TotalBsmtSF']
+cols_to_remove = ['GarageCars','GarageYrBlt']
 
+
+#Get correlation values for feature pairs
+corr_vals = dp.get_corrvals(dataset_df)
 
 #saleprice correlation matrix
 #define top/bottom n features we want to look at vs target variable
@@ -101,6 +105,7 @@ sns.distplot(dataset_df["SalePrice"])
 
 #plot histo of all numerical values
 dp.plot_all_hist(dataset_df)
+
 
 
     
@@ -143,8 +148,13 @@ sns.catplot(x='MSZoning',y='SalePrice', data=dataset_df,
             )
 
 
+#Check for skewness of features
+numerical_feats = dataset_df.dtypes[dataset_df.dtypes != "object"].index
+skewed_feats = dataset_df[numerical_feats].apply(lambda x: skew(x.dropna())).sort_values(ascending=False)
+skewness = pd.DataFrame({'Skew' :skewed_feats})
 
-
+#Visualize skewness
+sns.distplot(dataset_df['MiscVal'])
 
 ################
 # Data Cleansing
@@ -152,6 +162,9 @@ sns.catplot(x='MSZoning',y='SalePrice', data=dataset_df,
 
 #Copy dataframe
 new_df=dataset_df.copy()
+
+
+
 
 # Based on the description of the dataset, anything missing here is actually N/A 
 # We should replace the values with "None" so that they are encoded  to a specific value
@@ -163,6 +176,7 @@ cols_to_mod = ['MSSubClass','MiscFeature','Alley','Fence','FireplaceQu','GarageT
 for col in cols_to_mod:
     new_df[col] = dataset_df[col].fillna("None")
 
+sns.distplot(new_df['MiscVal'])
 
 # Based on the description of the dataset, anything missing here is actually N/A 
 # We should replace the values with 0 so that they are encoded  to a specific value
@@ -173,6 +187,21 @@ cols_to_mod = ['MasVnrArea','BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF',\
 for col in cols_to_mod:
     new_df[col] = new_df[col].fillna(0)
 
+
+##Boxcox transformation for skewed features
+#define minimum skewness for transformation
+skewness = skewness[abs(skewness) > 0.75]
+#Feature names are just the index values here
+skewed_features = skewness.index
+
+
+#Define lambda value for boxcox transform
+lam = 0.15
+#Transform skewed features
+for col in skewed_features: 
+    new_df[col] = boxcox1p(new_df[col], lam)
+    
+    
 #Removing outliers for GrLivArea
 plot_relplot(dataset_df,'GrLivArea','SalePrice')
 new_df = new_df.drop(dataset_df[(dataset_df['GrLivArea']>4000) & (dataset_df['SalePrice'] < 300000)].index)
@@ -192,21 +221,10 @@ new_df = new_df.drop(cols_to_remove,axis=1)
 
 
 #Remove outliers using quantile values
-
-area_cols = ['LotArea',
- 'MasVnrArea',
- 'BsmtFinSF1',
- 'BsmtUnfSF',
- '1stFlrSF',
- '2ndFlrSF',
- 'GrLivArea',
- 'GarageArea',
- 'WoodDeckSF',
- 'OpenPorchSF']
-
 col_list = area_cols
 
 plot_relplot(dataset_df,'GrLivArea','SalePrice')
+#Remove values > 99 percentile of the population for each column in the area list
 new_df = dp.remove_outliers_quant(new_df,col_list,0.99)
 plot_relplot(new_df,'GrLivArea','SalePrice')
 
@@ -220,7 +238,6 @@ new_df = dp.impute_missing_mean(new_df)
 
 #reset index since we have dropped some rows 
 new_df.reset_index(drop=True, inplace=True)
-
 
 ####################
 #Feature Engineering
@@ -241,8 +258,12 @@ sns.relplot(x='GrLivArea',y='SalePrice',data=new_df,
             hue='area_cluster',style='area_cluster',height=8,
             palette='YlGnBu')
 
-#Create new feature of area * (number or rooms)
-new_df['area_rooms']=new_df['GrLivArea']*(new_df['TotRmsAbvGrd']+new_df['FullBath']+new_df['HalfBath'])
+
+#Create new feature for overall living area
+new_df['TotalSF'] = new_df['TotalBsmtSF'] + new_df['1stFlrSF'] +new_df['2ndFlrSF']
+
+#Create new feature of area * (number or rooms + overall quality)
+new_df['area_rooms']=new_df['TotalSF']*(new_df['TotRmsAbvGrd']+new_df['FullBath']+new_df['HalfBath']+new_df['OverallQual'])
 
 
 ####################
@@ -251,7 +272,7 @@ new_df['area_rooms']=new_df['GrLivArea']*(new_df['TotRmsAbvGrd']+new_df['FullBat
 
 #Save clean data to csv
 #Random shuffle
-#new_df = new_df.sample(frac=1).reset_index(drop=True)
+new_df = new_df.sample(frac=1).reset_index(drop=True)
 
 #Define train and test set
 test_pct = 0.2
@@ -261,6 +282,10 @@ train_row_count = new_df.shape[0] - test_row_count
 #Create train and validation dataframe and dump to csv
 train_df = new_df.loc[0:train_row_count-1,:]
 test_df =  new_df.loc[train_row_count:,:]
+
+#Check train and test distributions
+sns.distplot(train_df["SalePrice"])
+sns.distplot(test_df["SalePrice"])
 
 train_df.to_csv('new_train.csv',index=False)
 test_df.to_csv('new_test.csv',index=False)

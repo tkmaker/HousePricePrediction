@@ -27,11 +27,22 @@ def display_missing_colrows (df,colrow=0):
         print ("Rows with missing data:\n",missing_df)
 
 #Plot heatmap
-def plot_heatmap (df,vmax):
+def plot_heatmap (df,vmin=-0.8,vmax=1):
     #correlation matrix
     corrmat = df.corr()
-    f, ax = plt.subplots(figsize=(12, 12))
-    sns.heatmap(corrmat, vmax=vmax, square=True);
+    f, ax = plt.subplots(figsize=(15, 15))
+    sns.heatmap(corrmat, vmax=vmax, vmin=vmin,square=True);
+
+
+#Returns Pandas series with feature pairs and correlation values
+def get_corrvals (df):
+
+    corr_df = df.corr().abs()
+    corr_series = corr_df.unstack()
+    corr_sorted = corr_series.sort_values(ascending=False)
+    
+    return corr_sorted
+
 
 #Plots top/bottom n features in correlation matrix vs Target
 def plot_tb_heatmap (df,target,n,target_type):
