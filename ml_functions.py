@@ -1,16 +1,9 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
-import csv
-import random
-from sklearn import metrics
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import LabelEncoder
-from sklearn.decomposition import PCA
-from sklearn.ensemble import IsolationForest
+
+from sklearn.preprocessing import LabelEncoder,OneHotEncoder
 from scipy import stats
 from scipy.stats import norm
 from sys import exit
@@ -73,8 +66,8 @@ def plot_tb_heatmap (df,target,n,target_type):
 def plot_normplot (df,col):
 
     sns.distplot(df[col], fit=norm);
-    fig = plt.figure()
-    res = stats.probplot(df[col], plot=plt)
+    plt.figure()
+    stats.probplot(df[col], plot=plt)
 
 #Encode categorical variables
 def encode_df(df,encode_type) : 

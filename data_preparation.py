@@ -48,10 +48,6 @@ preview_df = dataset_df.head()
 describe_df = dataset_df.describe()
 
 
-#Show unique values
-dataset_df.ExterQual.unique()
-#Show counts of categorical variables
-dataset_df.ExterQual.value_counts()
 
 #List of all columns
 col_list = list(dataset_df.columns)
@@ -64,22 +60,20 @@ dp.display_missing_colrows(dataset_df,0)
 dp.display_missing_colrows(dataset_df,1)
 
 
-#display categorical features
-print(dataset_df.dtypes[dataset_df.dtypes=='object'])
 
-#Column list of all categorical features
-obj_cols = list(dataset_df.select_dtypes(include=['object']).columns)
+
+#List of all categorical features
+print(dataset_df.select_dtypes(include=['object']).columns)
 
 
 ##### Correlation Maps #########
 
-new_df = dp.impute_missing_mean(dataset_df)
 
 #Plot correlation matrix
-dp.plot_heatmap(new_df,0.8)
+dp.plot_heatmap(dataset_df,0.8)
 
 #Add features with similarity to be removed later
-cols_to_remove = ['GarageCars','GarageYrBlt','TotalBsmtSF','TotRmsAbvGrd']
+cols_to_remove = ['GarageCars','GarageYrBlt','TotalBsmtSF']
 
 
 #saleprice correlation matrix
@@ -247,7 +241,8 @@ sns.relplot(x='GrLivArea',y='SalePrice',data=new_df,
             hue='area_cluster',style='area_cluster',height=8,
             palette='YlGnBu')
 
-
+#Create new feature of area * (number or rooms)
+new_df['area_rooms']=new_df['GrLivArea']*(new_df['TotRmsAbvGrd']+new_df['FullBath']+new_df['HalfBath'])
 
 
 ####################

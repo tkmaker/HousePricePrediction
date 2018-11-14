@@ -5,23 +5,20 @@ Created on Tue Oct  2 21:52:12 2018
 @author: Trushant Kalyanpur
 """
 
-from numpy import zeros
 import pickle
 
-import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import OneHotEncoder,LabelEncoder
 
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.svm import SVR
 
 import time
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold,learning_curve
 from sklearn.metrics import mean_squared_error,r2_score,mean_absolute_error
-from sklearn.learning_curve import learning_curve
-#from xgboost import XGBRegressor
+from xgboost import XGBRegressor
+from sklearn.svm import SVR
 
 class regression_model (object):
     
@@ -38,13 +35,13 @@ class regression_model (object):
         self.model = RandomForestRegressor(n_estimators=25) #,min_samples_leaf=3,min_samples_split=8)
         
       
-        
+        """
         #XGBoost model - Gradient Boosted Descision tree
-        #self.model = XGBRegressor(max_depth=10,\
-         #           min_child_weight=4, subsample=0.7, colsample_bytree=0.6,\
-          #          reg_alpha= 0.1, \
-           #         objective= 'reg:linear', nthread=8, scale_pos_weight=1,seed=27)
-
+        self.model = XGBRegressor(max_depth=10,\
+                    min_child_weight=4, subsample=0.7, colsample_bytree=0.6,\
+                   reg_alpha= 0.1, \
+                    objective= 'reg:linear', nthread=8, scale_pos_weight=1,seed=27)
+        """
     
     #Encode categorical variables
     def encode_train_df(self,df,encode_type) : 

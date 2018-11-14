@@ -19,11 +19,6 @@ import ml_functions as dp
 #Import test data
 test_df  = pd.read_csv('new_test.csv')
 
-#Add cluster column we created
-kmeans = pickle.load(open('cluster_model.h5','rb'))
-lotArea_array = np.array(test_df["LotArea"]).reshape(-1,1)
-test_df["area_cluster"]  = kmeans.predict(lotArea_array)
-
 
 #Initialize  and load pre-trained model
 regressor = regression_model()
@@ -31,11 +26,11 @@ model_path = 'random_forest'
 regressor.loadModel(model_path)
 
 #Impute missing values with mean
-X_imputed = dp.impute_missing_mean(test_df)
-X = X_imputed
+#X_imputed = dp.impute_missing_mean(test_df)
+#X = X_imputed
 
 #Drop sale price since this is the target value
-X_test = X.drop("SalePrice",axis=1)
+X_test = test_df.drop("SalePrice",axis=1)
 
 
 
@@ -46,10 +41,10 @@ y_true = test_df["SalePrice"]
 #Predicted values 
 
 #uncomment for non-xgboost models
-y_pred = regressor.predict(X_test)
+#y_pred = regressor.predict(X_test)
 
 #Uncomment for xgboost
-#y_pred = regressor.predict(X_test.values)
+y_pred = regressor.predict(X_test.values)
 
 #Calculate Mean Absolute Error and R2 score based on predictions
 mae = mean_absolute_error(y_true,y_pred)
