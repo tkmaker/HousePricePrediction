@@ -30,7 +30,7 @@ regressor.trainModel(X,y)
 
 
 #Save model 
-model_path = 'random_forest'
+model_path = 'random_forest_ww46'
 regressor.saveModel(model_path)
 
                 

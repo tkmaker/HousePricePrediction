@@ -133,7 +133,6 @@ sns.pairplot(dataset_df,height=2,hue='OverallQual', vars=[
 
 #Printing quantiles
 var = dataset_df.LotArea
-var.describe()
 print(var.quantile([.5,0.75,0.90,0.95,0.99,1]))
 
 
@@ -143,7 +142,7 @@ sns.relplot(x='LotArea',y='SalePrice',
             data=dataset_df,aspect=1,height=8,)
 
 #Cat plots
-sns.catplot(x='MSZoning',y='SalePrice', data=dataset_df,
+sns.catplot(x='OverallQual',y='SalePrice', data=dataset_df,
             kind = 'box',height=8
             )
 
@@ -154,7 +153,7 @@ skewed_feats = dataset_df[numerical_feats].apply(lambda x: skew(x.dropna())).sor
 skewness = pd.DataFrame({'Skew' :skewed_feats})
 
 #Visualize skewness
-sns.distplot(dataset_df['MiscVal'])
+sns.distplot(dataset_df['PoolArea'])
 
 ################
 # Data Cleansing
@@ -176,7 +175,6 @@ cols_to_mod = ['MSSubClass','MiscFeature','Alley','Fence','FireplaceQu','GarageT
 for col in cols_to_mod:
     new_df[col] = dataset_df[col].fillna("None")
 
-sns.distplot(new_df['MiscVal'])
 
 # Based on the description of the dataset, anything missing here is actually N/A 
 # We should replace the values with 0 so that they are encoded  to a specific value
@@ -195,12 +193,15 @@ skewness = skewness[abs(skewness) > 0.75]
 skewed_features = skewness.index
 
 
+
+
 #Define lambda value for boxcox transform
 lam = 0.15
 #Transform skewed features
 for col in skewed_features: 
     new_df[col] = boxcox1p(new_df[col], lam)
-    
+
+
     
 #Removing outliers for GrLivArea
 plot_relplot(dataset_df,'GrLivArea','SalePrice')
@@ -219,11 +220,23 @@ new_df = new_df.drop(lowcorr_cols,axis=1)
 #Drop redundant, duplicate features
 new_df = new_df.drop(cols_to_remove,axis=1)
 
+area_cols = ['LotArea',
+ 'MasVnrArea',
+ 'BsmtFinSF1',
+ 'BsmtFinSF2',
+ 'BsmtUnfSF',
+ 'TotalBsmtSF',
+ '1stFlrSF',
+ '2ndFlrSF',
+ 'GrLivArea',
+ 'GarageArea',
+ 'WoodDeckSF',
+ 'OpenPorchSF']
 
 #Remove outliers using quantile values
 col_list = area_cols
 
-plot_relplot(dataset_df,'GrLivArea','SalePrice')
+plot_relplot(new_df,'GrLivArea','SalePrice')
 #Remove values > 99 percentile of the population for each column in the area list
 new_df = dp.remove_outliers_quant(new_df,col_list,0.99)
 plot_relplot(new_df,'GrLivArea','SalePrice')

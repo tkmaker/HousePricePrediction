@@ -22,7 +22,7 @@ test_df  = pd.read_csv('new_test.csv')
 
 #Initialize  and load pre-trained model
 regressor = regression_model()
-model_path = 'random_forest'
+model_path = 'random_forest_ww46'
 regressor.loadModel(model_path)
 
 #Impute missing values with mean
